@@ -1,6 +1,7 @@
 #include "Driver/led.h"
 #include "stm32f4xx_hal.h"
 #include "tim.h"
+#include <stdbool.h>
 
 ///////////////////////////////////////////////////////////////////////////////////
 /*                           Private variables                                   */
@@ -8,6 +9,7 @@
 
 static int Number_of_Blinks;
 static int count = 0;
+static bool tmr_busy; // set to when timer is running
 
 ///////////////////////////////////////////////////////////////////////////////////
 /*                        Private Function References                            */
@@ -35,6 +37,10 @@ void led_blink(int no_of_blinks){
  * @return no return parameters.
  */
 void led_on(void){
+	// stoppinng timer for avoiding further timer interrupt
+	if (tmr_busy){
+		StopTimer();
+	}
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_SET);
 }
 
@@ -44,6 +50,10 @@ void led_on(void){
  * @return no return parameters.
  */
 void led_off(void){
+	// stoppinng timer for avoiding further timer interrupt
+	if (tmr_busy){
+		StopTimer();
+	}
 	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_15, GPIO_PIN_RESET);
 }
 
@@ -54,7 +64,7 @@ void led_off(void){
  */
 void led_init(){
 	led_on();
-	HAL_Delay(1000);
+	HAL_Delay(100);
 	led_off();
 	
 	//__HAL_TIM_SET_PRESCALER(&htim2,7999);
@@ -71,6 +81,7 @@ void led_init(){
  */
 void StartTimer()
 {
+	tmr_busy = 1;
 	HAL_TIM_Base_Start_IT(&htim2);
 }
 
@@ -81,6 +92,7 @@ void StartTimer()
  */
 void StopTimer()
 {
+	tmr_busy = 0;
 	HAL_TIM_Base_Stop_IT(&htim2);
 }
 
